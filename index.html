@@ -1,0 +1,1930 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Financial Management System</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+    }
+
+    .container {
+        display: flex;
+        min-height: 100vh;
+    }
+
+    .sidebar {
+        width: 280px;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(20px);
+        border-right: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;
+        padding: 20px;
+        transition: all 0.3s ease;
+    }
+
+    .sidebar h2 {
+        margin-bottom: 30px;
+        font-size: 1.8rem;
+        font-weight: 600;
+        text-align: center;
+        background: linear-gradient(45deg, #fff, #e0e7ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .sidebar ul {
+        list-style: none;
+    }
+
+    .sidebar ul li {
+        margin-bottom: 8px;
+    }
+
+    .sidebar ul li a {
+        color: rgba(255, 255, 255, 0.9);
+        text-decoration: none;
+        display: block;
+        padding: 15px 20px;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .sidebar ul li a:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateX(5px);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .content {
+        flex: 1;
+        padding: 30px;
+        overflow-y: auto;
+    }
+
+    .module {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .module h2 {
+        color: #4c63d2;
+        margin-bottom: 25px;
+        font-size: 2rem;
+        font-weight: 700;
+    }
+
+    .actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    button {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        color: white;
+        border: none;
+        padding: 15px 25px;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 600;
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+    }
+
+    button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
+    }
+
+    .form-container {
+        margin-top: 25px;
+        background: rgba(255, 255, 255, 0.7);
+        padding: 25px;
+        border-radius: 15px;
+        backdrop-filter: blur(10px);
+    }
+
+    .hidden {
+        display: none;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: #4c63d2;
+        font-weight: 600;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        padding: 12px 15px;
+        border: 2px solid rgba(76, 99, 210, 0.2);
+        border-radius: 10px;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.9);
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 20px rgba(102, 126, 234, 0.2);
+    }
+
+    .form-group textarea {
+        height: 120px;
+        resize: vertical;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 25px;
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    th, td {
+        padding: 15px;
+        text-align: left;
+        border-bottom: 1px solid rgba(76, 99, 210, 0.1);
+    }
+
+    th {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        color: white;
+        font-weight: 600;
+    }
+
+    tr:hover {
+        background: rgba(102, 126, 234, 0.05);
+    }
+
+    .status-indicator {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .status-success {
+        background: rgba(34, 197, 94, 0.2);
+        color: #16a34a;
+    }
+
+    .status-warning {
+        background: rgba(251, 191, 36, 0.2);
+        color: #d97706;
+    }
+
+    .status-error {
+        background: rgba(239, 68, 68, 0.2);
+        color: #dc2626;
+    }
+
+    .data-display {
+        background: rgba(255, 255, 255, 0.8);
+        border-radius: 15px;
+        padding: 20px;
+        margin-top: 20px;
+        backdrop-filter: blur(10px);
+    }
+
+    .loading {
+        text-align: center;
+        padding: 40px;
+        color: #667eea;
+        font-size: 18px;
+    }
+
+    .error-message {
+        background: rgba(239, 68, 68, 0.1);
+        color: #dc2626;
+        padding: 15px;
+        border-radius: 10px;
+        border-left: 4px solid #dc2626;
+        margin: 20px 0;
+    }
+
+    .success-message {
+        background: rgba(34, 197, 94, 0.1);
+        color: #16a34a;
+        padding: 15px;
+        border-radius: 10px;
+        border-left: 4px solid #16a34a;
+        margin: 20px 0;
+    }
+  </style>
+</head>
+<body>
+    <div class="container">
+        <nav class="sidebar">
+            <h2>Financial Management</h2>
+            <ul>
+                <li><a href="#" data-module="general-ledger">General Ledger</a></li>
+                <li><a href="#" data-module="accounts-receivable">Accounts Receivable</a></li>
+                <li><a href="#" data-module="accounts-payable">Accounts Payable</a></li>
+                <li><a href="#" data-module="fixed-assets">Fixed Assets</a></li>
+                <li><a href="#" data-module="reporting">Financial Reporting</a></li>
+            </ul>
+        </nav>
+        
+        <main class="content">
+            <div id="general-ledger" class="module">
+                <h2>General Ledger</h2>
+                <div class="actions">
+                    <button onclick="showForm('chart-accounts')">Chart of Accounts</button>
+                    <button onclick="showForm('journal-entry')">Journal Entry</button>
+                    <button onclick="showForm('trial-balance')">Trial Balance</button>
+                    <button onclick="showForm('financial-statements')">Financial Statements</button>
+                </div>
+                <div id="gl-form-container" class="form-container"></div>
+                <div id="gl-data-display" class="data-display"></div>
+            </div>
+
+            <div id="accounts-receivable" class="module hidden">
+                <h2>Accounts Receivable</h2>
+                <div class="actions">
+                    <button onclick="showForm('customer-management')">Customer Management</button>
+                    <button onclick="showForm('invoicing')">Invoicing</button>
+                    <button onclick="showForm('payment-tracking')">Payment Tracking</button>
+                    <button onclick="showForm('aging-reports')">Aging Reports</button>
+                </div>
+                <div id="ar-form-container" class="form-container"></div>
+                <div id="ar-data-display" class="data-display"></div>
+            </div>
+
+            <div id="accounts-payable" class="module hidden">
+                <h2>Accounts Payable</h2>
+                <div class="actions">
+                    <button onclick="showForm('vendor-management')">Vendor Management</button>
+                    <button onclick="showForm('purchase-orders')">Purchase Orders</button>
+                    <button onclick="showForm('bill-management')">Bill Management</button>
+                    <button onclick="showForm('expense-tracking')">Expense Tracking</button>
+                </div>
+                <div id="ap-form-container" class="form-container"></div>
+                <div id="ap-data-display" class="data-display"></div>
+            </div>
+
+            <div id="fixed-assets" class="module hidden">
+                <h2>Fixed Assets</h2>
+                <div class="actions">
+                    <button onclick="showForm('asset-registration')">Asset Registration</button>
+                    <button onclick="showForm('depreciation')">Depreciation</button>
+                    <button onclick="showForm('maintenance')">Maintenance Records</button>
+                    <button onclick="showForm('asset-disposal')">Asset Disposal</button>
+                </div>
+                <div id="fa-form-container" class="form-container"></div>
+                <div id="fa-data-display" class="data-display"></div>
+            </div>
+
+            <div id="reporting" class="module hidden">
+                <h2>Financial Reporting</h2>
+                <div class="actions">
+                    <button onclick="showForm('financial-reports')">Financial Reports</button>
+                    <button onclick="showForm('budget-analysis')">Budget Analysis</button>
+                    <button onclick="showForm('forecasting')">Forecasting</button>
+                    <button onclick="showForm('compliance')">Compliance Reports</button>
+                </div>
+                <div id="reporting-form-container" class="form-container"></div>
+                <div id="reporting-data-display" class="data-display"></div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Supabase Configuration
+        const { createClient } = supabase;
+        const supabaseUrl = 'https://jfabpsxpqvhanlkujyfz.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpmYWJwc3hwcXZoYW5sa3VqeWZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg2MTQ5OTIsImV4cCI6MjA2NDE5MDk5Mn0.OQ-N5zLxuQ5yLA3hCEjzdXFOiQuvszHE6JSp5SxURh4';
+        const supabaseClient = createClient(supabaseUrl, supabaseKey);
+
+        // Global state management
+        const state = {
+            currentModule: 'general-ledger',
+            currentForm: null,
+            data: {
+                chartAccounts: [],
+                journalEntries: [],
+                customers: [],
+                vendors: [],
+                assets: []
+            }
+        };
+
+        // Initialize application
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initializeApp();
+            setupEventListeners();
+        });
+
+        async function initializeApp() {
+            try {
+                // Test Supabase connection
+                const { data, error } = await supabaseClient
+                    .from('chart_of_accounts')
+                    .select('count', { count: 'exact', head: true });
+                
+                if (error) throw error;
+                
+                console.log('✅ Supabase connection successful');
+                showMessage('Connected to database successfully!', 'success');
+                
+                // Load initial data
+                await loadChartOfAccounts();
+                
+            } catch (error) {
+                console.error('❌ Supabase connection failed:', error);
+                showMessage('Database connection failed: ' + error.message, 'error');
+            }
+        }
+
+        function setupEventListeners() {
+            const navLinks = document.querySelectorAll('.sidebar a');
+            const modules = document.querySelectorAll('.module');
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const moduleId = link.getAttribute('data-module');
+                    showModule(moduleId);
+                });
+            });
+        }
+
+        function showModule(moduleId) {
+            const modules = document.querySelectorAll('.module');
+            modules.forEach(module => {
+                module.classList.add('hidden');
+            });
+            document.getElementById(moduleId).classList.remove('hidden');
+            state.currentModule = moduleId;
+            
+            // Load module-specific data
+            loadModuleData(moduleId);
+        }
+
+        async function loadModuleData(moduleId) {
+            switch(moduleId) {
+                case 'general-ledger':
+                    await loadChartOfAccounts();
+                    await loadJournalEntries();
+                    break;
+                case 'accounts-receivable':
+                    await loadCustomers();
+                    await loadInvoices();
+                    break;
+                case 'accounts-payable':
+                    await loadVendors();
+                    await loadBills();
+                    break;
+                case 'fixed-assets':
+                    await loadAssets();
+                    break;
+            }
+        }
+
+        // Form Management
+        function showForm(formType) {
+            const forms = {
+                'chart-accounts': createChartOfAccountsForm,
+                'journal-entry': createJournalEntryForm,
+                'trial-balance': createTrialBalanceForm,
+                'financial-statements': createFinancialStatementsForm,
+                'customer-management': createCustomerManagementForm,
+                'invoicing': createInvoicingForm,
+                'payment-tracking': createPaymentTrackingForm,
+                'aging-reports': createAgingReportsForm,
+                'vendor-management': createVendorManagementForm,
+                'purchase-orders': createPurchaseOrderForm,
+                'bill-management': createBillManagementForm,
+                'expense-tracking': createExpenseTrackingForm,
+                'asset-registration': createAssetRegistrationForm,
+                'depreciation': createDepreciationForm,
+                'maintenance': createMaintenanceForm,
+                'asset-disposal': createAssetDisposalForm,
+                'financial-reports': createFinancialReportsForm,
+                'budget-analysis': createBudgetAnalysisForm,
+                'forecasting': createForecastingForm,
+                'compliance': createComplianceForm
+            };
+
+            const containerMap = {
+                'chart-accounts': 'gl-form-container',
+                'journal-entry': 'gl-form-container',
+                'trial-balance': 'gl-form-container',
+                'financial-statements': 'gl-form-container',
+                'customer-management': 'ar-form-container',
+                'invoicing': 'ar-form-container',
+                'payment-tracking': 'ar-form-container',
+                'aging-reports': 'ar-form-container',
+                'vendor-management': 'ap-form-container',
+                'purchase-orders': 'ap-form-container',
+                'bill-management': 'ap-form-container',
+                'expense-tracking': 'ap-form-container',
+                'asset-registration': 'fa-form-container',
+                'depreciation': 'fa-form-container',
+                'maintenance': 'fa-form-container',
+                'asset-disposal': 'fa-form-container',
+                'financial-reports': 'reporting-form-container',
+                'budget-analysis': 'reporting-form-container',
+                'forecasting': 'reporting-form-container',
+                'compliance': 'reporting-form-container'
+            };
+
+            const container = document.getElementById(containerMap[formType]);
+            if (container && forms[formType]) {
+                container.innerHTML = '';
+                forms[formType](container);
+                state.currentForm = formType;
+            }
+        }
+
+        // Chart of Accounts Functions
+        function createChartOfAccountsForm(container) {
+            const form = `
+                <h3>Chart of Accounts Management</h3>
+                <form onsubmit="handleChartAccountSubmit(event)">
+                    <div class="form-group">
+                        <label>Account Number</label>
+                        <input name="account_number" type="text" required placeholder="e.g., 1000">
+                    </div>
+                    <div class="form-group">
+                        <label>Account Name</label>
+                        <input name="account_name" type="text" required placeholder="e.g., Cash">
+                    </div>
+                    <div class="form-group">
+                        <label>Account Type</label>
+                        <select name="account_type" required>
+                            <option value="">Select Account Type</option>
+                            <option value="Assets">Assets</option>
+                            <option value="Liabilities">Liabilities</option>
+                            <option value="Equity">Equity</option>
+                            <option value="Revenue">Revenue</option>
+                            <option value="Expenses">Expenses</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Account Category</label>
+                        <select name="account_category" required>
+                            <option value="">Select Category</option>
+                            <option value="Current Assets">Current Assets</option>
+                            <option value="Fixed Assets">Fixed Assets</option>
+                            <option value="Current Liabilities">Current Liabilities</option>
+                            <option value="Long-term Liabilities">Long-term Liabilities</option>
+                            <option value="Operating Revenue">Operating Revenue</option>
+                            <option value="Operating Expenses">Operating Expenses</option>
+                            <option value="Other Income">Other Income</option>
+                            <option value="Other Expenses">Other Expenses</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea name="description" placeholder="Account description..."></textarea>
+                    </div>
+                    <button type="submit">Add Account</button>
+                </form>
+            `;
+            container.innerHTML = form;
+            loadChartOfAccounts();
+        }
+
+        async function handleChartAccountSubmit(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const data = Object.fromEntries(formData.entries());
+            
+            try {
+                const { error } = await supabaseClient
+                    .from('chart_of_accounts')
+                    .insert([{
+                        account_number: data.account_number,
+                        account_name: data.account_name,
+                        account_type: data.account_type,
+                        account_category: data.account_category,
+                        description: data.description,
+                        balance: 0,
+                        is_active: true,
+                        created_at: new Date().toISOString()
+                    }]);
+
+                if (error) throw error;
+                
+                showMessage('Account added successfully!', 'success');
+                event.target.reset();
+                await loadChartOfAccounts();
+                
+            } catch (error) {
+                showMessage('Error adding account: ' + error.message, 'error');
+            }
+        }
+
+        async function loadChartOfAccounts() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('chart_of_accounts')
+                    .select('*')
+                    .order('account_number');
+
+                if (error) throw error;
+
+                state.data.chartAccounts = data;
+                displayChartOfAccounts(data);
+                
+            } catch (error) {
+                console.error('Error loading chart of accounts:', error);
+                showMessage('Error loading accounts: ' + error.message, 'error');
+            }
+        }
+
+        function displayChartOfAccounts(accounts) {
+            const container = document.getElementById('gl-data-display');
+            if (!container) return;
+
+            if (accounts.length === 0) {
+                container.innerHTML = '<p>No accounts found. Add some accounts to get started.</p>';
+                return;
+            }
+
+            const table = `
+                <h3>Chart of Accounts</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Account Number</th>
+                            <th>Account Name</th>
+                            <th>Type</th>
+                            <th>Category</th>
+                            <th>Balance</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${accounts.map(account => `
+                            <tr>
+                                <td>${account.account_number}</td>
+                                <td>${account.account_name}</td>
+                                <td>${account.account_type}</td>
+                                <td>${account.account_category}</td>
+                                <td>$${parseFloat(account.balance || 0).toFixed(2)}</td>
+                                <td>
+                                    <span class="status-indicator ${account.is_active ? 'status-success' : 'status-error'}">
+                                        ${account.is_active ? 'Active' : 'Inactive'}
+                                    </span>
+                                </td>
+                                <td>
+                                    <button onclick="editAccount(${account.id})">Edit</button>
+                                    <button onclick="deleteAccount(${account.id})">Delete</button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            container.innerHTML = table;
+        }
+
+        // Journal Entry Functions
+        function createJournalEntryForm(container) {
+            const form = `
+                <h3>Journal Entry</h3>
+                <form onsubmit="handleJournalEntrySubmit(event)">
+                    <div class="form-group">
+                        <label>Entry Date</label>
+                        <input name="entry_date" type="date" required value="${new Date().toISOString().split('T')[0]}">
+                    </div>
+                    <div class="form-group">
+                        <label>Reference Number</label>
+                        <input name="reference_number" type="text" placeholder="JE-001">
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea name="description" required placeholder="Journal entry description..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Debit Account</label>
+                        <select name="debit_account_id" required>
+                            <option value="">Select Debit Account</option>
+                            ${state.data.chartAccounts.map(account => 
+                                `<option value="${account.id}">${account.account_number} - ${account.account_name}</option>`
+                            ).join('')}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Credit Account</label>
+                        <select name="credit_account_id" required>
+                            <option value="">Select Credit Account</option>
+                            ${state.data.chartAccounts.map(account => 
+                                `<option value="${account.id}">${account.account_number} - ${account.account_name}</option>`
+                            ).join('')}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Amount</label>
+                        <input name="amount" type="number" step="0.01" required placeholder="0.00">
+                    </div>
+                    <button type="submit">Post Journal Entry</button>
+                </form>
+            `;
+            container.innerHTML = form;
+            loadJournalEntries();
+        }
+
+        async function handleJournalEntrySubmit(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const data = Object.fromEntries(formData.entries());
+            
+            try {
+                // Insert journal entry
+                const { data: journalEntry, error: jeError } = await supabaseClient
+                    .from('journal_entries')
+                    .insert([{
+                        entry_date: data.entry_date,
+                        reference_number: data.reference_number,
+                        description: data.description,
+                        total_amount: parseFloat(data.amount),
+                        status: 'Posted',
+                        created_at: new Date().toISOString()
+                    }])
+                    .select()
+                    .single();
+
+                if (jeError) throw jeError;
+
+                // Insert journal entry lines
+                const lines = [
+                    {
+                        journal_entry_id: journalEntry.id,
+                        account_id: parseInt(data.debit_account_id),
+                        debit_amount: parseFloat(data.amount),
+                        credit_amount: 0
+                    },
+                    {
+                        journal_entry_id: journalEntry.id,
+                        account_id: parseInt(data.credit_account_id),
+                        debit_amount: 0,
+                        credit_amount: parseFloat(data.amount)
+                    }
+                ];
+
+                const { error: linesError } = await supabaseClient
+                    .from('journal_entry_lines')
+                    .insert(lines);
+
+                if (linesError) throw linesError;
+
+                showMessage('Journal entry posted successfully!', 'success');
+                event.target.reset();
+                await loadJournalEntries();
+                await updateAccountBalances();
+                
+            } catch (error) {
+                showMessage('Error posting journal entry: ' + error.message, 'error');
+            }
+        }
+
+        async function loadJournalEntries() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('journal_entries')
+                    .select(`
+                        *,
+                        journal_entry_lines (
+                            *,
+                            chart_of_accounts (account_number, account_name)
+                        )
+                    `)
+                    .order('entry_date', { ascending: false });
+
+                if (error) throw error;
+
+                state.data.journalEntries = data;
+                displayJournalEntries(data);
+                
+            } catch (error) {
+                console.error('Error loading journal entries:', error);
+            }
+        }
+
+        function displayJournalEntries(entries) {
+            const container = document.getElementById('gl-data-display');
+            if (!container || state.currentForm !== 'journal-entry') return;
+
+            if (entries.length === 0) {
+                container.innerHTML += '<p>No journal entries found.</p>';
+                return;
+            }
+
+            const table = `
+                <h3>Recent Journal Entries</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Reference</th>
+                            <th>Description</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${entries.slice(0, 10).map(entry => `
+                            <tr>
+                                <td>${new Date(entry.entry_date).toLocaleDateString()}</td>
+                                <td>${entry.reference_number || 'N/A'}</td>
+                                <td>${entry.description}</td>
+                                <td>$${parseFloat(entry.total_amount).toFixed(2)}</td>
+                                <td>
+                                    <span class="status-indicator status-success">
+                                        ${entry.status}
+                                    </span>
+                                </td>
+                                <td>
+                                    <button onclick="viewJournalEntry(${entry.id})">View</button>
+                                    <button onclick="reverseJournalEntry(${entry.id})">Reverse</button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            container.innerHTML += table;
+        }
+
+        // Customer Management
+        function createCustomerManagementForm(container) {
+            const form = `
+                <h3>Customer Management</h3>
+                <form onsubmit="handleCustomerSubmit(event)">
+                    <div class="form-group">
+                        <label>Customer Name</label>
+                        <input name="customer_name" type="text" required placeholder="Customer name">
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input name="email" type="email" required placeholder="customer@email.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Phone</label>
+                        <input name="phone" type="tel" placeholder="Phone number">
+                    </div>
+                    <div class="form-group">
+                        <label>Address</label>
+                        <textarea name="address" placeholder="Customer address"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Credit Limit</label>
+                        <input name="credit_limit" type="number" step="0.01" placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label>Payment Terms</label>
+                        <select name="payment_terms">
+                            <option value="Net 30">Net 30</option>
+                            <option value="Net 15">Net 15</option>
+                            <option value="COD">Cash on Delivery</option>
+                            <option value="Prepaid">Prepaid</option>
+                        </select>
+                    </div>
+                    <button type="submit">Add Customer</button>
+                </form>
+            `;
+            container.innerHTML = form;
+            loadCustomers();
+        }
+
+        async function handleCustomerSubmit(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const data = Object.fromEntries(formData.entries());
+            
+            try {
+                const { error } = await supabaseClient
+                    .from('customers')
+                    .insert([{
+                        customer_name: data.customer_name,
+                        email: data.email,
+                        phone: data.phone,
+                        address: data.address,
+                        credit_limit: parseFloat(data.credit_limit) || 0,
+                        payment_terms: data.payment_terms,
+                        balance: 0,
+                        is_active: true,
+                        created_at: new Date().toISOString()
+                    }]);
+
+                if (error) throw error;
+                
+                showMessage('Customer added successfully!', 'success');
+                event.target.reset();
+                await loadCustomers();
+                
+            } catch (error) {
+                showMessage('Error adding customer: ' + error.message, 'error');
+            }
+        }
+
+        async function loadCustomers() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('customers')
+                    .select('*')
+                    .order('customer_name');
+
+                if (error) throw error;
+
+                state.data.customers = data;
+                displayCustomers(data);
+                
+            } catch (error) {
+                console.error('Error loading customers:', error);
+            }
+        }
+
+        function displayCustomers(customers) {
+            const container = document.getElementById('ar-data-display');
+            if (!container) return;
+
+            if (customers.length === 0) {
+                container.innerHTML = '<p>No customers found. Add customers to get started.</p>';
+                return;
+            }
+
+            const table = `
+                <h3>Customer List</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Customer Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Credit Limit</th>
+                            <th>Balance</th>
+                            <th>Payment Terms</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${customers.map(customer => `
+                            <tr>
+                                <td>${customer.customer_name}</td>
+                                <td>${customer.email}</td>
+                                <td>${customer.phone || 'N/A'}</td>
+                                <td>${parseFloat(customer.credit_limit || 0).toFixed(2)}</td>
+                                <td>${parseFloat(customer.balance || 0).toFixed(2)}</td>
+                                <td>${customer.payment_terms}</td>
+                                <td>
+                                    <span class="status-indicator ${customer.is_active ? 'status-success' : 'status-error'}">
+                                        ${customer.is_active ? 'Active' : 'Inactive'}
+                                    </span>
+                                </td>
+                                <td>
+                                    <button onclick="editCustomer(${customer.id})">Edit</button>
+                                    <button onclick="viewCustomerStatement(${customer.id})">Statement</button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            container.innerHTML = table;
+        }
+
+        // Invoicing Functions
+        function createInvoicingForm(container) {
+            const form = `
+                <h3>Create Invoice</h3>
+                <form onsubmit="handleInvoiceSubmit(event)">
+                    <div class="form-group">
+                        <label>Customer</label>
+                        <select name="customer_id" required>
+                            <option value="">Select Customer</option>
+                            ${state.data.customers.map(customer => 
+                                `<option value="${customer.id}">${customer.customer_name}</option>`
+                            ).join('')}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Invoice Date</label>
+                        <input name="invoice_date" type="date" required value="${new Date().toISOString().split('T')[0]}">
+                    </div>
+                    <div class="form-group">
+                        <label>Due Date</label>
+                        <input name="due_date" type="date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Invoice Number</label>
+                        <input name="invoice_number" type="text" placeholder="INV-001">
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea name="description" required placeholder="Invoice description or items"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Subtotal</label>
+                        <input name="subtotal" type="number" step="0.01" required placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label>Tax Amount</label>
+                        <input name="tax_amount" type="number" step="0.01" placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label>Total Amount</label>
+                        <input name="total_amount" type="number" step="0.01" required placeholder="0.00">
+                    </div>
+                    <button type="submit">Create Invoice</button>
+                </form>
+            `;
+            container.innerHTML = form;
+            loadInvoices();
+        }
+
+        async function handleInvoiceSubmit(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const data = Object.fromEntries(formData.entries());
+            
+            try {
+                const { error } = await supabaseClient
+                    .from('invoices')
+                    .insert([{
+                        customer_id: parseInt(data.customer_id),
+                        invoice_number: data.invoice_number,
+                        invoice_date: data.invoice_date,
+                        due_date: data.due_date,
+                        description: data.description,
+                        subtotal: parseFloat(data.subtotal),
+                        tax_amount: parseFloat(data.tax_amount) || 0,
+                        total_amount: parseFloat(data.total_amount),
+                        status: 'Pending',
+                        created_at: new Date().toISOString()
+                    }]);
+
+                if (error) throw error;
+                
+                showMessage('Invoice created successfully!', 'success');
+                event.target.reset();
+                await loadInvoices();
+                
+            } catch (error) {
+                showMessage('Error creating invoice: ' + error.message, 'error');
+            }
+        }
+
+        async function loadInvoices() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('invoices')
+                    .select(`
+                        *,
+                        customers (customer_name)
+                    `)
+                    .order('invoice_date', { ascending: false });
+
+                if (error) throw error;
+
+                displayInvoices(data);
+                
+            } catch (error) {
+                console.error('Error loading invoices:', error);
+            }
+        }
+
+        function displayInvoices(invoices) {
+            const container = document.getElementById('ar-data-display');
+            if (!container || state.currentForm !== 'invoicing') return;
+
+            if (invoices.length === 0) {
+                container.innerHTML += '<p>No invoices found.</p>';
+                return;
+            }
+
+            const table = `
+                <h3>Recent Invoices</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Invoice #</th>
+                            <th>Customer</th>
+                            <th>Date</th>
+                            <th>Due Date</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${invoices.slice(0, 10).map(invoice => `
+                            <tr>
+                                <td>${invoice.invoice_number || 'N/A'}</td>
+                                <td>${invoice.customers?.customer_name}</td>
+                                <td>${new Date(invoice.invoice_date).toLocaleDateString()}</td>
+                                <td>${new Date(invoice.due_date).toLocaleDateString()}</td>
+                                <td>${parseFloat(invoice.total_amount).toFixed(2)}</td>
+                                <td>
+                                    <span class="status-indicator ${getStatusClass(invoice.status)}">
+                                        ${invoice.status}
+                                    </span>
+                                </td>
+                                <td>
+                                    <button onclick="viewInvoice(${invoice.id})">View</button>
+                                    <button onclick="recordPayment(${invoice.id})">Payment</button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            container.innerHTML += table;
+        }
+
+        // Vendor Management
+        function createVendorManagementForm(container) {
+            const form = `
+                <h3>Vendor Management</h3>
+                <form onsubmit="handleVendorSubmit(event)">
+                    <div class="form-group">
+                        <label>Vendor Name</label>
+                        <input name="vendor_name" type="text" required placeholder="Vendor name">
+                    </div>
+                    <div class="form-group">
+                        <label>Contact Person</label>
+                        <input name="contact_person" type="text" placeholder="Contact person">
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input name="email" type="email" required placeholder="vendor@email.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Phone</label>
+                        <input name="phone" type="tel" placeholder="Phone number">
+                    </div>
+                    <div class="form-group">
+                        <label>Address</label>
+                        <textarea name="address" placeholder="Vendor address"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Payment Terms</label>
+                        <select name="payment_terms">
+                            <option value="Net 30">Net 30</option>
+                            <option value="Net 15">Net 15</option>
+                            <option value="COD">Cash on Delivery</option>
+                            <option value="Prepaid">Prepaid</option>
+                        </select>
+                    </div>
+                    <button type="submit">Add Vendor</button>
+                </form>
+            `;
+            container.innerHTML = form;
+            loadVendors();
+        }
+
+        async function handleVendorSubmit(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const data = Object.fromEntries(formData.entries());
+            
+            try {
+                const { error } = await supabaseClient
+                    .from('vendors')
+                    .insert([{
+                        vendor_name: data.vendor_name,
+                        contact_person: data.contact_person,
+                        email: data.email,
+                        phone: data.phone,
+                        address: data.address,
+                        payment_terms: data.payment_terms,
+                        balance: 0,
+                        is_active: true,
+                        created_at: new Date().toISOString()
+                    }]);
+
+                if (error) throw error;
+                
+                showMessage('Vendor added successfully!', 'success');
+                event.target.reset();
+                await loadVendors();
+                
+            } catch (error) {
+                showMessage('Error adding vendor: ' + error.message, 'error');
+            }
+        }
+
+        async function loadVendors() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('vendors')
+                    .select('*')
+                    .order('vendor_name');
+
+                if (error) throw error;
+
+                state.data.vendors = data;
+                displayVendors(data);
+                
+            } catch (error) {
+                console.error('Error loading vendors:', error);
+            }
+        }
+
+        function displayVendors(vendors) {
+            const container = document.getElementById('ap-data-display');
+            if (!container) return;
+
+            if (vendors.length === 0) {
+                container.innerHTML = '<p>No vendors found. Add vendors to get started.</p>';
+                return;
+            }
+
+            const table = `
+                <h3>Vendor List</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Vendor Name</th>
+                            <th>Contact Person</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Balance</th>
+                            <th>Payment Terms</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${vendors.map(vendor => `
+                            <tr>
+                                <td>${vendor.vendor_name}</td>
+                                <td>${vendor.contact_person || 'N/A'}</td>
+                                <td>${vendor.email}</td>
+                                <td>${vendor.phone || 'N/A'}</td>
+                                <td>${parseFloat(vendor.balance || 0).toFixed(2)}</td>
+                                <td>${vendor.payment_terms}</td>
+                                <td>
+                                    <span class="status-indicator ${vendor.is_active ? 'status-success' : 'status-error'}">
+                                        ${vendor.is_active ? 'Active' : 'Inactive'}
+                                    </span>
+                                </td>
+                                <td>
+                                    <button onclick="editVendor(${vendor.id})">Edit</button>
+                                    <button onclick="viewVendorStatement(${vendor.id})">Statement</button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            container.innerHTML = table;
+        }
+
+        // Asset Management
+        function createAssetRegistrationForm(container) {
+            const form = `
+                <h3>Asset Registration</h3>
+                <form onsubmit="handleAssetSubmit(event)">
+                    <div class="form-group">
+                        <label>Asset Name</label>
+                        <input name="asset_name" type="text" required placeholder="Asset name">
+                    </div>
+                    <div class="form-group">
+                        <label>Asset Category</label>
+                        <select name="asset_category" required>
+                            <option value="">Select Category</option>
+                            <option value="Equipment">Equipment</option>
+                            <option value="Furniture">Furniture</option>
+                            <option value="Vehicles">Vehicles</option>
+                            <option value="Buildings">Buildings</option>
+                            <option value="Technology">Technology</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Purchase Date</label>
+                        <input name="purchase_date" type="date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Purchase Cost</label>
+                        <input name="purchase_cost" type="number" step="0.01" required placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label>Useful Life (Years)</label>
+                        <input name="useful_life" type="number" required placeholder="5">
+                    </div>
+                    <div class="form-group">
+                        <label>Depreciation Method</label>
+                        <select name="depreciation_method" required>
+                            <option value="Straight Line">Straight Line</option>
+                            <option value="Declining Balance">Declining Balance</option>
+                            <option value="Sum of Years">Sum of Years</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Location</label>
+                        <input name="location" type="text" placeholder="Asset location">
+                    </div>
+                    <div class="form-group">
+                        <label>Serial Number</label>
+                        <input name="serial_number" type="text" placeholder="Serial number">
+                    </div>
+                    <button type="submit">Register Asset</button>
+                </form>
+            `;
+            container.innerHTML = form;
+            loadAssets();
+        }
+
+        async function handleAssetSubmit(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const data = Object.fromEntries(formData.entries());
+            
+            try {
+                const { error } = await supabaseClient
+                    .from('fixed_assets')
+                    .insert([{
+                        asset_name: data.asset_name,
+                        asset_category: data.asset_category,
+                        purchase_date: data.purchase_date,
+                        purchase_cost: parseFloat(data.purchase_cost),
+                        useful_life: parseInt(data.useful_life),
+                        depreciation_method: data.depreciation_method,
+                        location: data.location,
+                        serial_number: data.serial_number,
+                        accumulated_depreciation: 0,
+                        book_value: parseFloat(data.purchase_cost),
+                        status: 'Active',
+                        created_at: new Date().toISOString()
+                    }]);
+
+                if (error) throw error;
+                
+                showMessage('Asset registered successfully!', 'success');
+                event.target.reset();
+                await loadAssets();
+                
+            } catch (error) {
+                showMessage('Error registering asset: ' + error.message, 'error');
+            }
+        }
+
+        async function loadAssets() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('fixed_assets')
+                    .select('*')
+                    .order('asset_name');
+
+                if (error) throw error;
+
+                state.data.assets = data;
+                displayAssets(data);
+                
+            } catch (error) {
+                console.error('Error loading assets:', error);
+            }
+        }
+
+        function displayAssets(assets) {
+            const container = document.getElementById('fa-data-display');
+            if (!container) return;
+
+            if (assets.length === 0) {
+                container.innerHTML = '<p>No assets found. Register assets to get started.</p>';
+                return;
+            }
+
+            const table = `
+                <h3>Fixed Assets</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Asset Name</th>
+                            <th>Category</th>
+                            <th>Purchase Date</th>
+                            <th>Purchase Cost</th>
+                            <th>Accumulated Depreciation</th>
+                            <th>Book Value</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${assets.map(asset => `
+                            <tr>
+                                <td>${asset.asset_name}</td>
+                                <td>${asset.asset_category}</td>
+                                <td>${new Date(asset.purchase_date).toLocaleDateString()}</td>
+                                <td>${parseFloat(asset.purchase_cost).toFixed(2)}</td>
+                                <td>${parseFloat(asset.accumulated_depreciation || 0).toFixed(2)}</td>
+                                <td>${parseFloat(asset.book_value).toFixed(2)}</td>
+                                <td>
+                                    <span class="status-indicator ${getStatusClass(asset.status)}">
+                                        ${asset.status}
+                                    </span>
+                                </td>
+                                <td>
+                                    <button onclick="calculateDepreciation(${asset.id})">Depreciate</button>
+                                    <button onclick="editAsset(${asset.id})">Edit</button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            container.innerHTML = table;
+        }
+
+        // Utility Functions
+        function getStatusClass(status) {
+            switch(status?.toLowerCase()) {
+                case 'active':
+                case 'posted':
+                case 'paid':
+                    return 'status-success';
+                case 'pending':
+                case 'draft':
+                    return 'status-warning';
+                case 'inactive':
+                case 'cancelled':
+                case 'overdue':
+                    return 'status-error';
+                default:
+                    return 'status-warning';
+            }
+        }
+
+        function showMessage(message, type) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `${type}-message`;
+            messageDiv.textContent = message;
+            
+            document.body.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                document.body.removeChild(messageDiv);
+            }, 5000);
+        }
+
+        async function updateAccountBalances() {
+            // This function would update account balances based on journal entries
+            // Implementation depends on your specific accounting rules
+            console.log('Updating account balances...');
+        }
+
+        // Placeholder functions for other forms
+        function createTrialBalanceForm(container) {
+            container.innerHTML = `
+                <h3>Trial Balance</h3>
+                <div class="form-group">
+                    <label>As of Date</label>
+                    <input type="date" id="trial-balance-date" value="${new Date().toISOString().split('T')[0]}">
+                    <button onclick="generateTrialBalance()">Generate Trial Balance</button>
+                </div>
+                <div id="trial-balance-results"></div>
+            `;
+        }
+
+        function createFinancialStatementsForm(container) {
+            container.innerHTML = `
+                <h3>Financial Statements</h3>
+                <div class="form-group">
+                    <label>Statement Type</label>
+                    <select id="statement-type">
+                        <option value="income">Income Statement</option>
+                        <option value="balance">Balance Sheet</option>
+                        <option value="cashflow">Cash Flow Statement</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Period From</label>
+                    <input type="date" id="period-from">
+                </div>
+                <div class="form-group">
+                    <label>Period To</label>
+                    <input type="date" id="period-to" value="${new Date().toISOString().split('T')[0]}">
+                </div>
+                <button onclick="generateFinancialStatement()">Generate Statement</button>
+                <div id="financial-statement-results"></div>
+            `;
+        }
+
+        // Placeholder implementations for other forms
+        function createPaymentTrackingForm(container) {
+            // Display a list of payments (dummy data for now)
+            container.innerHTML = `
+                <h3>Payment Tracking</h3>
+                <p>Track payments received from customers and made to vendors.</p>
+                <button onclick="showAddPaymentForm()">Add Payment</button>
+                <div id="payment-list"></div>
+                <div id="add-payment-form" class="hidden"></div>
+            `;
+            loadPayments();
+        }
+
+        function showAddPaymentForm() {
+            const form = `
+                <h4>Add Payment</h4>
+                <form onsubmit="handleAddPayment(event)">
+                    <div class="form-group">
+                        <label>Payer/Payee</label>
+                        <input name="payer" type="text" required placeholder="Customer or Vendor Name">
+                    </div>
+                    <div class="form-group">
+                        <label>Amount</label>
+                        <input name="amount" type="number" step="0.01" required placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label>Date</label>
+                        <input name="date" type="date" required value="${new Date().toISOString().split('T')[0]}">
+                    </div>
+                    <div class="form-group">
+                        <label>Type</label>
+                        <select name="type" required>
+                            <option value="Received">Received</option>
+                            <option value="Paid">Paid</option>
+                        </select>
+                    </div>
+                    <button type="submit">Save Payment</button>
+                </form>
+            `;
+            document.getElementById('add-payment-form').innerHTML = form;
+            document.getElementById('add-payment-form').classList.remove('hidden');
+        }
+
+        function handleAddPayment(event) {
+            event.preventDefault();
+            showMessage('Payment saved (demo only)', 'success');
+            document.getElementById('add-payment-form').classList.add('hidden');
+            loadPayments();
+        }
+
+        function loadPayments() {
+            // Demo payments
+            const payments = [
+                { payer: 'Customer A', amount: 500, date: '2025-05-01', type: 'Received' },
+                { payer: 'Vendor B', amount: 300, date: '2025-05-10', type: 'Paid' }
+            ];
+            const list = `
+                <table><thead><tr><th>Payer/Payee</th><th>Amount</th><th>Date</th><th>Type</th></tr></thead><tbody>
+                ${payments.map(p => `<tr><td>${p.payer}</td><td>$${parseFloat(p.amount).toFixed(2)}</td><td>${p.date}</td><td>${p.type}</td></tr>`).join('')}
+                </tbody></table>
+            `;
+            document.getElementById('payment-list').innerHTML = list;
+        }
+
+        function createAgingReportsForm(container) {
+            // Display a simple aging report (demo)
+            container.innerHTML = `
+                <h3>Aging Reports</h3>
+                <p>Shows outstanding receivables grouped by age.</p>
+                <button onclick="generateAgingReport()">Generate Aging Report</button>
+                <div id="aging-report-results"></div>
+            `;
+        }
+
+        function generateAgingReport() {
+            // Demo data
+            const report = [
+                { customer: 'Customer A', current: 200, '31-60': 100, '61-90': 50, '90+': 0 },
+                { customer: 'Customer B', current: 0, '31-60': 0, '61-90': 0, '90+': 300 }
+            ];
+            const table = `
+                <table><thead><tr><th>Customer</th><th>Current</th><th>31-60</th><th>61-90</th><th>90+</th></tr></thead><tbody>
+                ${report.map(r => `<tr><td>${r.customer}</td><td>$${r.current}</td><td>$${r['31-60']}</td><td>$${r['61-90']}</td><td>$${r['90+']}</td></tr>`).join('')}
+                </tbody></table>
+            `;
+            document.getElementById('aging-report-results').innerHTML = table;
+        }
+
+        function createPurchaseOrderForm(container) {
+            container.innerHTML = `
+                <h3>Purchase Orders</h3>
+                <button onclick="showAddPurchaseOrderForm()">Add Purchase Order</button>
+                <div id="purchase-order-list"></div>
+                <div id="add-purchase-order-form" class="hidden"></div>
+            `;
+            loadPurchaseOrders();
+        }
+
+        function showAddPurchaseOrderForm() {
+            const form = `
+                <h4>Add Purchase Order</h4>
+                <form onsubmit="handleAddPurchaseOrder(event)">
+                    <div class="form-group">
+                        <label>Vendor</label>
+                        <input name="vendor" type="text" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Order Date</label>
+                        <input name="order_date" type="date" required value="${new Date().toISOString().split('T')[0]}">
+                    </div>
+                    <div class="form-group">
+                        <label>Amount</label>
+                        <input name="amount" type="number" step="0.01" required>
+                    </div>
+                    <button type="submit">Save Order</button>
+                </form>
+            `;
+            document.getElementById('add-purchase-order-form').innerHTML = form;
+            document.getElementById('add-purchase-order-form').classList.remove('hidden');
+        }
+
+        function handleAddPurchaseOrder(event) {
+            event.preventDefault();
+            showMessage('Purchase order saved (demo only)', 'success');
+            document.getElementById('add-purchase-order-form').classList.add('hidden');
+            loadPurchaseOrders();
+        }
+
+        function loadPurchaseOrders() {
+            // Demo purchase orders
+            const orders = [
+                { vendor: 'Vendor A', order_date: '2025-05-01', amount: 1000 },
+                { vendor: 'Vendor B', order_date: '2025-05-10', amount: 500 }
+            ];
+            const list = `
+                <table><thead><tr><th>Vendor</th><th>Order Date</th><th>Amount</th></tr></thead><tbody>
+                ${orders.map(o => `<tr><td>${o.vendor}</td><td>${o.order_date}</td><td>$${parseFloat(o.amount).toFixed(2)}</td></tr>`).join('')}
+                </tbody></table>
+            `;
+            document.getElementById('purchase-order-list').innerHTML = list;
+        }
+
+        function createBillManagementForm(container) {
+            container.innerHTML = `
+                <h3>Bill Management</h3>
+                <button onclick="showAddBillForm()">Add Bill</button>
+                <div id="bill-list"></div>
+                <div id="add-bill-form" class="hidden"></div>
+            `;
+            loadBills();
+        }
+
+        function showAddBillForm() {
+            const form = `
+                <h4>Add Bill</h4>
+                <form onsubmit="handleAddBill(event)">
+                    <div class="form-group">
+                        <label>Vendor</label>
+                        <input name="vendor" type="text" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Bill Date</label>
+                        <input name="bill_date" type="date" required value="${new Date().toISOString().split('T')[0]}">
+                    </div>
+                    <div class="form-group">
+                        <label>Amount</label>
+                        <input name="amount" type="number" step="0.01" required>
+                    </div>
+                    <button type="submit">Save Bill</button>
+                </form>
+            `;
+            document.getElementById('add-bill-form').innerHTML = form;
+            document.getElementById('add-bill-form').classList.remove('hidden');
+        }
+
+        function handleAddBill(event) {
+            event.preventDefault();
+            showMessage('Bill saved (demo only)', 'success');
+            document.getElementById('add-bill-form').classList.add('hidden');
+            loadBills();
+        }
+
+        function loadBills() {
+            // Demo bills
+            const bills = [
+                { vendor: 'Vendor A', bill_date: '2025-05-01', amount: 400 },
+                { vendor: 'Vendor B', bill_date: '2025-05-10', amount: 250 }
+            ];
+            const list = `
+                <table><thead><tr><th>Vendor</th><th>Bill Date</th><th>Amount</th></tr></thead><tbody>
+                ${bills.map(b => `<tr><td>${b.vendor}</td><td>${b.bill_date}</td><td>$${parseFloat(b.amount).toFixed(2)}</td></tr>`).join('')}
+                </tbody></table>
+            `;
+            document.getElementById('bill-list').innerHTML = list;
+        }
+
+        function createExpenseTrackingForm(container) {
+            container.innerHTML = `
+                <h3>Expense Tracking</h3>
+                <button onclick="showAddExpenseForm()">Add Expense</button>
+                <div id="expense-list"></div>
+                <div id="add-expense-form" class="hidden"></div>
+            `;
+            loadExpenses();
+        }
+
+        function showAddExpenseForm() {
+            const form = `
+                <h4>Add Expense</h4>
+                <form onsubmit="handleAddExpense(event)">
+                    <div class="form-group">
+                        <label>Description</label>
+                        <input name="description" type="text" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Date</label>
+                        <input name="date" type="date" required value="${new Date().toISOString().split('T')[0]}">
+                    </div>
+                    <div class="form-group">
+                        <label>Amount</label>
+                        <input name="amount" type="number" step="0.01" required>
+                    </div>
+                    <button type="submit">Save Expense</button>
+                </form>
+            `;
+            document.getElementById('add-expense-form').innerHTML = form;
+            document.getElementById('add-expense-form').classList.remove('hidden');
+        }
+
+        function handleAddExpense(event) {
+            event.preventDefault();
+            showMessage('Expense saved (demo only)', 'success');
+            document.getElementById('add-expense-form').classList.add('hidden');
+            loadExpenses();
+        }
+
+        function loadExpenses() {
+            // Demo expenses
+            const expenses = [
+                { description: 'Office Supplies', date: '2025-05-01', amount: 120 },
+                { description: 'Utilities', date: '2025-05-10', amount: 80 }
+            ];
+            const list = `
+                <table><thead><tr><th>Description</th><th>Date</th><th>Amount</th></tr></thead><tbody>
+                ${expenses.map(e => `<tr><td>${e.description}</td><td>${e.date}</td><td>$${parseFloat(e.amount).toFixed(2)}</td></tr>`).join('')}
+                </tbody></table>
+            `;
+            document.getElementById('expense-list').innerHTML = list;
+        }
+
+        function createDepreciationForm(container) {
+            container.innerHTML = `
+                <h3>Depreciation Calculator</h3>
+                <button onclick="showDepreciationCalculator()">Calculate Depreciation</button>
+                <div id="depreciation-results"></div>
+            `;
+        }
+
+        function showDepreciationCalculator() {
+            // Demo calculation
+            const result = `
+                <p>Straight Line Depreciation Example:</p>
+                <p>Asset Cost: $10,000 | Useful Life: 5 years</p>
+                <p>Annual Depreciation: $2,000</p>
+            `;
+            document.getElementById('depreciation-results').innerHTML = result;
+        }
+
+        function createMaintenanceForm(container) {
+            container.innerHTML = `
+                <h3>Maintenance Records</h3>
+                <button onclick="showAddMaintenanceForm()">Add Maintenance</button>
+                <div id="maintenance-list"></div>
+                <div id="add-maintenance-form" class="hidden"></div>
+            `;
+            loadMaintenanceRecords();
+        }
+
+        function showAddMaintenanceForm() {
+            const form = `
+                <h4>Add Maintenance Record</h4>
+                <form onsubmit="handleAddMaintenance(event)">
+                    <div class="form-group">
+                        <label>Asset</label>
+                        <input name="asset" type="text" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Date</label>
+                        <input name="date" type="date" required value="${new Date().toISOString().split('T')[0]}">
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <input name="description" type="text" required>
+                    </div>
+                    <button type="submit">Save Record</button>
+                </form>
+            `;
+            document.getElementById('add-maintenance-form').innerHTML = form;
+            document.getElementById('add-maintenance-form').classList.remove('hidden');
+        }
+
+        async function handleAddMaintenance(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const data = Object.fromEntries(formData.entries());
+            try {
+                const { error } = await supabaseClient
+                    .from('maintenance_records')
+                    .insert([{
+                        asset: data.asset,
+                        date: data.date,
+                        description: data.description,
+                        created_at: new Date().toISOString()
+                    }]);
+                if (error) throw error;
+                showMessage('Maintenance record saved!', 'success');
+                document.getElementById('add-maintenance-form').classList.add('hidden');
+                await loadMaintenanceRecords();
+            } catch (error) {
+                showMessage('Error saving maintenance record: ' + error.message, 'error');
+            }
+        }
+
+        async function loadMaintenanceRecords() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('maintenance_records')
+                    .select('*')
+                    .order('date', { ascending: false });
+                if (error) throw error;
+                const records = data || [];
+                const list = `
+                    <table><thead><tr><th>Asset</th><th>Date</th><th>Description</th></tr></thead><tbody>
+                    ${records.map(r => `<tr><td>${r.asset}</td><td>${new Date(r.date).toLocaleDateString()}</td><td>${r.description}</td></tr>`).join('')}
+                    </tbody></table>
+                `;
+                document.getElementById('maintenance-list').innerHTML = list;
+            } catch (error) {
+                document.getElementById('maintenance-list').innerHTML = '<p>Error loading maintenance records: ' + error.message + '</p>';
+            }
+        }
+
+        function createAssetDisposalForm(container) {
+            container.innerHTML = `
+                <h3>Asset Disposal</h3>
+                <button onclick="showAddDisposalForm()">Add Disposal</button>
+                <div id="disposal-list"></div>
+                <div id="add-disposal-form" class="hidden"></div>
+            `;
+            loadDisposals();
+        }
+
+        function showAddDisposalForm() {
+            const form = `
+                <h4>Add Asset Disposal</h4>
+                <form onsubmit="handleAddDisposal(event)">
+                    <div class="form-group">
+                        <label>Asset</label>
+                        <input name="asset" type="text" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Date</label>
+                        <input name="date" type="date" required value="${new Date().toISOString().split('T')[0]}">
+                    </div>
+                    <div class="form-group">
+                        <label>Reason</label>
+                        <input name="reason" type="text" required>
+                    </div>
+                    <button type="submit">Save Disposal</button>
+                </form>
+            `;
+            document.getElementById('add-disposal-form').innerHTML = form;
+            document.getElementById('add-disposal-form').classList.remove('hidden');
+        }
+
+        function handleAddDisposal(event) {
+            event.preventDefault();
+            showMessage('Asset disposal saved (demo only)', 'success');
+            document.getElementById('add-disposal-form').classList.add('hidden');
+            loadDisposals();
+        }
+
+        function loadDisposals() {
+            // Demo disposals
+            const disposals = [
+                { asset: 'Vehicle A', date: '2025-05-01', reason: 'Sold' },
+                { asset: 'Old Laptop', date: '2025-05-10', reason: 'Scrapped' }
+            ];
+            const list = `
+                <table><thead><tr><th>Asset</th><th>Date</th><th>Reason</th></tr></thead><tbody>
+                ${disposals.map(d => `<tr><td>${d.asset}</td><td>${d.date}</td><td>${d.reason}</td></tr>`).join('')}
+                </tbody></table>
+            `;
+            document.getElementById('disposal-list').innerHTML = list;
+        }
+
+        function createFinancialReportsForm(container) {
+            container.innerHTML = `
+                <h3>Financial Reports</h3>
+                <button onclick="generateFinancialReport()">Generate Report</button>
+                <div id="financial-report-results"></div>
+            `;
+        }
+
+        function generateFinancialReport() {
+            // Demo report
+            const report = `
+                <h4>Income Statement</h4>
+                <p>Total Revenue: $10,000</p>
+                <p>Total Expenses: $7,000</p>
+                <p><strong>Net Income: $3,000</strong></p>
+            `;
+            document.getElementById('financial-report-results').innerHTML = report;
+        }
+
+        function createBudgetAnalysisForm(container) {
+            container.innerHTML = `
+                <h3>Budget Analysis</h3>
+                <button onclick="generateBudgetAnalysis()">Analyze Budget</button>
+                <div id="budget-analysis-results"></div>
+            `;
+        }
+
+        function generateBudgetAnalysis() {
+            // Demo analysis
+            const analysis = `
+                <h4>Budget vs Actual</h4>
+                <p>Budget: $12,000 | Actual: $10,500</p>
+                <p><strong>Variance: -$1,500</strong></p>
+            `;
+            document.getElementById('budget-analysis-results').innerHTML = analysis;
+        }
+
+        function createForecastingForm(container) {
+            container.innerHTML = `
+                <h3>Financial Forecasting</h3>
+                <button onclick="generateForecast()">Generate Forecast</button>
+                <div id="forecast-results"></div>
+            `;
+        }
+
+        function generateForecast() {
+            // Demo forecast
+            const forecast = `
+                <h4>Next Quarter Forecast</h4>
+                <p>Projected Revenue: $15,000</p>
+                <p>Projected Expenses: $11,000</p>
+                <p><strong>Projected Net Income: $4,000</strong></p>
+            `;
+            document.getElementById('forecast-results').innerHTML = forecast;
+        }
+
+        function createComplianceForm(container) {
+            container.innerHTML = `
+                <h3>Compliance Reports</h3>
+                <button onclick="generateComplianceReport()">Generate Compliance Report</button>
+                <div id="compliance-report-results"></div>
+            `;
+        }
+
+        function generateComplianceReport() {
+            // Demo compliance
+            const compliance = `
+                <h4>Compliance Status</h4>
+                <p>All required filings are up to date.</p>
+                <p>No outstanding compliance issues.</p>
+            `;
+            document.getElementById('compliance-report-results').innerHTML = compliance;
+        }
+
+        // Action functions (to be implemented)
+        function editAccount(id) { console.log('Edit account:', id); }
+        function deleteAccount(id) { console.log('Delete account:', id); }
+        function viewJournalEntry(id) { console.log('View journal entry:', id); }
+        function reverseJournalEntry(id) { console.log('Reverse journal entry:', id); }
+        function editCustomer(id) { console.log('Edit customer:', id); }
+        function viewCustomerStatement(id) { console.log('View customer statement:', id); }
+        function viewInvoice(id) { console.log('View invoice:', id); }
+        function recordPayment(id) { console.log('Record payment:', id); }
+        function editVendor(id) { console.log('Edit vendor:', id); }
+        function viewVendorStatement(id) { console.log('View vendor statement:', id); }
+        function editAsset(id) { console.log('Edit asset:', id); }
+        function calculateDepreciation(id) { console.log('Calculate depreciation:', id); }
+        function generateTrialBalance() { console.log('Generate trial balance'); }
+        function generateFinancialStatement() { console.log('Generate financial statement'); }
+    </script>
+</body>
+</html>
